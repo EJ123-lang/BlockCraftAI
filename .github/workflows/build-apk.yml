@@ -36,23 +36,23 @@ jobs:
           java-version: "17"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive --clean
 
-      - name: Build release APK
+      - name: Build installable APK
         working-directory: android
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk BlockCraftAI-v1.0.0.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk BlockCraftAI-v1.0.1.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: BlockCraftAI-Android-APK
-          path: BlockCraftAI-v1.0.0.apk
+          path: BlockCraftAI-v1.0.1.apk
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
