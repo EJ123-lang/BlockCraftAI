@@ -1,6 +1,12 @@
 name: Build BeesWins APK
 
 on:
+  push:
+    branches:
+      - 'claude/beeswins-apk-artifact'
+    paths:
+      - 'beeswins/BeesWins-Android-Source-v1.0.0.zip.b64'
+      - '.github/workflows/beeswins-apk.yml'
   pull_request:
     branches: [main]
     paths:
@@ -13,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout source
@@ -55,7 +61,7 @@ jobs:
           sha256sum dist/BeesWins-v1.0.0.apk > dist/BeesWins-v1.0.0.apk.sha256
           ls -lh dist/
 
-      - name: Upload BeesWins APK
+      - name: Upload BeesWins APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: BeesWins-v1.0.0-APK
@@ -65,3 +71,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
+
+      - name: Publish APK back to build branch
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p beeswins-output
+          cp dist/BeesWins-v1.0.0.apk beeswins-output/BeesWins-v1.0.0.apk
+          cp dist/BeesWins-v1.0.0.apk.sha256 beeswins-output/BeesWins-v1.0.0.apk.sha256
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add beeswins-output/BeesWins-v1.0.0.apk beeswins-output/BeesWins-v1.0.0.apk.sha256
+          if git diff --cached --quiet; then
+            echo 'APK output already current.'
+          else
+            git commit -m 'Publish BeesWins v1.0.0 APK [skip ci]'
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
